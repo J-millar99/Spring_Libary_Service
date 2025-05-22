@@ -1,0 +1,266 @@
+---
+config:
+  look: classic
+  layout: elk
+  theme: mc
+---
+
+classDiagram
+namespace Model {
+    class Book {
+        <<Entity>>
+        - Long id
+        - String title
+        - String author
+        - String isbn
+        - BookStatus status
+        - Integer publicationYear
+        - List~Loan~ loans
+    }
+
+    class Member {
+        <<Entity>>
+        - Long id
+        - String name
+        - String email
+        - String phoneNumber
+        - List~Loan~ loans
+    }
+
+    class Loan {
+        <<Entity>>
+        - Long id
+        - Book book
+        - Member member
+        - LocalDate loanDate
+        - LocalDate dueDate
+        - LocalDate returnDate
+    }
+    class BookStatus {
+        <<enumeration>>
+        AVAILABLE
+        LOANED
+        RESERVED
+        LOST
+        DAMAGED
+    }
+}
+
+Book --> BookStatus : has
+Loan --> Book : uses
+Loan --> Member : uses
+
+namespace DTO {
+    class BookDTO {
+        <<DTO>>
+        - Long id
+        - String title
+        - String author
+        - String isbn
+        - BookStatus status
+        - Integer publicationYear
+    }
+        class BookDTO.CreateBookRequest {
+            - String title
+            - String author
+            - String isbn
+            - Integer publicationYear
+        }
+        class BookDTO.UpdateBookRequest {
+            - String title
+            - String author
+            - String isbn
+            - BookStatus status
+            - Integer publicationYear
+        }
+    class MemberDTO {
+        <<DTO>>
+        - Long id
+        - String name
+        - String email
+        - String phoneNumber
+    }
+        class MemberDTO.CreateMemberRequest {
+            - String name
+            - String email
+            - String phoneNumber
+        }
+        class MemberDTO.UpdateMemberRequest {
+            - String name
+            - String email
+            - String phoneNumber
+        }
+    class LoanDTO {
+        <<DTO>>
+        - Long id
+        - Long bookId
+        - String bookTitle
+        - Long memberId
+        - String memberName
+        - LocalDate loanDate
+        - LocalDate dueDate
+        - LocalDate returnDate
+    }
+        class LoanDTO.CreateLoanRequest {
+            - Long bookId
+            - Long memberId
+            - LocalDate dueDate
+        }
+        class LoanDTO.ReturnLoanRequest {
+            - Long loanId
+            - LocalDate returnDate
+        }
+}
+
+BookDTO ..> Book : maps from
+MemberDTO ..> Member : maps from
+LoanDTO ..> Loan : maps from
+
+BookDTO --> BookDTO.CreateBookRequest : contains
+BookDTO --> BookDTO.UpdateBookRequest : contains
+MemberDTO --> MemberDTO.CreateMemberRequest : contains
+MemberDTO --> MemberDTO.UpdateMemberRequest : contains
+LoanDTO --> LoanDTO.CreateLoanRequest : contains
+LoanDTO --> LoanDTO.ReturnLoanRequest : contains
+
+namespace Repository {
+    class JpaRepository~Book, Long~ {
+        <<interface>>
+    }
+
+    class JpaRepository~Member, Long~ {
+        <<interface>>
+    }
+
+    class JpaRepository~Loan, Long~ {
+        <<interface>>
+    }
+
+    class BookRepository {
+        <<Repository, interface>>
+        + List~Book~ findByTitleContaining(String title)
+        + List~Book~ findByAuthorContaining(String author)
+        + List~Book~ findByStatus(BookStatus status)
+    }
+
+    class MemberRepository {
+        <<Repository, interface>>
+        + Optional~Member~ findByEmail(String email)
+        + List~Member~ findByNameContaining(String name)
+    }
+
+    class LoanRepository {
+        <<Repository, interface>>
+        + List~Loan~ findByBookId(Long bookId)
+        + List~Loan~ findByMemberId(Long memberId)
+        + List~Loan~ findByReturnDateIsNull()
+        + List~Loan~ findByDueDateBeforeAndReturnDateIsNull(LocalDate date)
+    }
+}
+
+BookRepository --|> JpaRepository~Book, Long~
+MemberRepository --|> JpaRepository~Member, Long~
+LoanRepository --|> JpaRepository~Loan, Long~
+
+namespace Service {
+    class BookService {
+        <<Service>>
+        - final BookRepository bookRepository
+        + BookService(BookRepository bookRepository)
+        + List~BookDTO~ getAllBooks()
+        + BookDTO getBookById(Long id)
+        + BookDTO createBook(BookDTO.CreateBookRequest request)
+        + BookDTO updateBook(Long id, BookDTO.UpdateBookRequest request)
+        + void deleteBook(Long id)
+        + List~BookDTO~ searchBooksByTitle(String title)
+        + List~BookDTO~ searchBooksByAuthor(String author)
+        + List~BookDTO~ getBooksByStatus(BookStatus status)
+        - BookDTO convertToDTO(Book book)
+    }
+
+    class MemberService {
+        <<Service>>
+        - final MemberRepository memberRepository
+        + MemberService(MemberRepository memberRepository)
+        + List~MemberDTO~ getAllMembers() 
+        + MemberDTO getMemberById(Long id)
+        + MemberDTO createMember(MemberDTO.CreateMemberRequest request)
+        + MemberDTO updateMember(Long id, MemberDTO.UpdateMemberRequest request)
+        + void deleteMember(Long id)
+        + List~MemberDTO~ searchMembersByName(String name)
+        + MemberDTO convertToDTO(Member member)
+    }
+
+    class LoanService {
+        - final LoanRepository loanRepository
+        - final BookRepository bookRepository
+        - final MemberRepository memberRepository
+        + LoanService(LoanRepository loanRepository, BookRepository bookRepository, MemberRepository memberRepository)
+        + List~LoanDTO~ getAllLoans()
+        + LoanDTO getLoanById(Long id)
+        + List~LoanDTO~ getLoansByMemberId(Long memberId)
+        + List~LoanDTO~ getLoansByBookId(Long bookId)
+        + List~LoanDTO~ getCurrentLoans()
+        + List~LoanDTO~ getOverdueLoans()
+        + LoanDTO createLoan(LoanDTO.CreateLoanRequest request)
+        + LoanDTO returnBook(LoanDTO.ReturnLoanRequest request)
+        - LoanDTO convertToDTO(Loan loan)
+    }
+}
+
+BookService --> BookRepository : uses
+MemberService --> MemberRepository : uses
+LoanService --> LoanRepository : uses
+LoanService --> BookRepository : uses
+LoanService --> MemberRepository : uses
+
+BookService ..> BookDTO : creates
+MemberService ..> MemberDTO : creates
+LoanService ..> LoanDTO : creates
+
+
+namespace Controller {
+    class BookController {
+        <<Controller>>
+        - final BookService bookService
+        + BookController(BookService bookService)
+        + ResponseEntity~List~BookDTO~~ getAllBooks()
+        + ResponseEntity~BookDTO~ getBookById(Long id)
+        + ResponseEntity~BookDTO~ createBook(request BookDTO.CreateBookRequest)
+        + ResponseEntity~BookDTO~ updateBook(Long id, request BookDTO.UpdateBookRequest)
+        + ResponseEntity~Void~ deleteBook(Long id)
+        + ResponseEntity~List~BookDTO~~ searchBooksByTitle(String title)
+        + ResponseEntity~List~BookDTO~~ searchBooksByAuthor(String author)
+        + ResponseEntity~List~BookDTO~~ getBooksByStatus(status BookStatus)
+    }
+
+    class MemberController {
+        <<Controller>>
+        - final MemberService memberService
+        + MemberController(MemberService memberService)
+        + ResponseEntity~List~MemberDTO~~ getAllMembers()
+        + ResponseEntity~MemberDTO~ getMemberById(Long id)
+        + ResponseEntity~MemberDTO~ createMember(MemberDTO.CreateMemberRequest request)
+        + ResponseEntity~MemberDTO~ updateMember(Long id, MemberDTO.UpdateMemberRequest request)
+        + ResponseEntity~Void~ deleteMember(Long id)
+        + ResponseEntity~List~MemberDTO~~ searchMemberByName(String name)
+    }
+
+    class LoanController {
+        <<Controller>>
+        - final LoanService loanService
+        + LoanController(LoanService loanService)
+        + ResponseEntity~List~LoanDTO~~ getAllLoans()
+        + ResponseEntity~LoanDTO~ getLoanById(Long id)
+        + ResponseEntity~List~LoanDTO~~ getLoansByMemberId(Long memberId)
+        + ResponseEntity~List~LoanDTO~~ getLoansByBookId(Long bookId)
+        + ResponseEntity~List~LoanDTO~~ getCurrentLoans()
+        + ResponseEntity~List~LoanDTO~~ getOverdueLoans()
+        + ResponseEntity~LoanDTO~ borrowBook(LoanDTO.CreateLoanRequest request)
+        + ResponseEntity~LoanDTO~ returnBook(LoanDTO.ReturnLoanRequest request)
+    }
+}
+
+BookController --> BookService : uses
+MemberController --> MemberService : uses
+LoanController --> LoanService : uses
