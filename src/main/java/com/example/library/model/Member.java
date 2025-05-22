@@ -1,11 +1,8 @@
 package com.example.library.model;
 
 
-import jakarta.persistence.Entity;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.util.List;
 
@@ -13,11 +10,22 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-//@Entity
+@Entity
+@Data
 public class Member {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false) // 필수 값
     private String name;
+
+    @Column(unique = true) // 고유 값
     private String email;
+
+    @Column(name = "phone_number", unique = true) // 고유 값
     private String phoneNumber;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     private List<Loan> loans;
 }
