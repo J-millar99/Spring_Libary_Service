@@ -1,0 +1,37 @@
+erDiagram
+    BOOK {
+        bigint id PK "Primary Key"
+        varchar title "NOT NULL"
+        varchar author "NOT NULL"
+        varchar isbn "Unique Book Identifier"
+        varchar status "ENUM: AVAILABLE, LOANED, RESERVED, LOST, DAMAGED"
+        int publication_year "출판연도"
+        timestamp created_at "생성일시"
+        timestamp updated_at "수정일시"
+    }
+    
+    MEMBER {
+        bigint id PK "Primary Key"
+        varchar name "NOT NULL"
+        varchar email "UNIQUE, NOT NULL"
+        varchar phone_number "전화번호"
+        timestamp created_at "생성일시"
+        timestamp updated_at "수정일시"
+    }
+    
+    LOAN {
+        bigint id PK "Primary Key"
+        bigint book_id FK "Foreign Key to BOOK"
+        bigint member_id FK "Foreign Key to MEMBER"
+        date loan_date "NOT NULL, 대출일"
+        date due_date "반납예정일"
+        date return_date "실제반납일 (NULL if not returned)"
+        timestamp created_at "생성일시"
+        timestamp updated_at "수정일시"
+    }
+
+    %% Relationships
+    BOOK ||--o{ LOAN : "has many"
+    MEMBER ||--o{ LOAN : "has many"
+    LOAN }o--|| BOOK : "belongs to"
+    LOAN }o--|| MEMBER : "belongs to"
