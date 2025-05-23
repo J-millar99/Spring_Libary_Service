@@ -124,43 +124,45 @@ LoanDTO --> LoanDTO.CreateLoanRequest : contains
 LoanDTO --> LoanDTO.ReturnLoanRequest : contains
 
 namespace Repository {
-    class JpaRepository~Book, Long~ {
-        <<interface>>
-    }
+        class BookJpaRepository["JpaRepository&lt;Book, Long&gt;"] {
+            <<interface>>
+        }
 
-    class JpaRepository~Member, Long~ {
-        <<interface>>
-    }
+        class MemberJpaRepository["JpaRepository&lt;Member, Long&gt;"] {
+            <<interface>>
+        }
 
-    class JpaRepository~Loan, Long~ {
-        <<interface>>
-    }
+        class LoanJpaRepository["JpaRepository&lt;Loan, Long&gt;"] {
+            <<interface>>
+        }
 
     class BookRepository {
         <<Repository, interface>>
-        + List~Book~ findByTitleContaining(String title)
-        + List~Book~ findByAuthorContaining(String author)
-        + List~Book~ findByStatus(BookStatus status)
+        List~Book~ findByTitleContaining(String title)
+        List~Book~ findByAuthorContaining(String author)
+        List~Book~ findByStatus(BookStatus status)
+        Optional~Book~ findByAuthorAndTitle(String author, String title)
     }
 
     class MemberRepository {
         <<Repository, interface>>
-        + Optional~Member~ findByEmail(String email)
-        + List~Member~ findByNameContaining(String name)
+        Optional~Member~ findByEmail(String email)
+        Optional~Member~ findByPhoneNumber(String phoneNumber)
+        List~Member~ findByNameContaining(String name)
     }
 
     class LoanRepository {
         <<Repository, interface>>
-        + List~Loan~ findByBookId(Long bookId)
-        + List~Loan~ findByMemberId(Long memberId)
-        + List~Loan~ findByReturnDateIsNull()
-        + List~Loan~ findByDueDateBeforeAndReturnDateIsNull(LocalDate date)
+        List~Loan~ findByBookId(Long bookId)
+        List~Loan~ findByMemberId(Long memberId)
+        List~Loan~ findByReturnDateIsNull()
+        List~Loan~ findByDueDateBeforeAndReturnDateIsNull(LocalDate date)
     }
 }
 
-BookRepository --|> JpaRepository~Book, Long~
-MemberRepository --|> JpaRepository~Member, Long~
-LoanRepository --|> JpaRepository~Loan, Long~
+BookRepository --|> BookJpaRepository
+MemberRepository --|> MemberJpaRepository
+LoanRepository --|> LoanJpaRepository
 
 namespace Service {
     class BookService {

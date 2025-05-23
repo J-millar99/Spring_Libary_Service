@@ -3,9 +3,11 @@ package com.example.library.repository;
 import com.example.library.model.Book;
 import com.example.library.model.BookStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public interface BookRepository extends JpaRepository<Book, Long> {
     // 제목(부분 문자열)을 통해 해당하는 모든 도서를 검색
     public List<Book> findByTitleContaining(String title);
