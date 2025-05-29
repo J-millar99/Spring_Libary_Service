@@ -12,10 +12,18 @@ namespace Model {
         - Long id
         - String title
         - String author
+        - String publisher
+        - String imgUrl
+        - BookDetail bookDetail
+    }
+
+    class BookDetail {
+        <<Entity>>
         - String isbn
-        - BookStatus status
-        - Integer publicationYear
-        - List~Loan~ loans
+        - Category category
+        - LocalDate String publishedDate
+        - BookStatus bookStatus
+        - LoanStatus loanStatus
     }
 
     class Member {
@@ -24,7 +32,8 @@ namespace Model {
         - String name
         - String email
         - String phoneNumber
-        - List~Loan~ loans
+        - MemberStatus memberStatus
+        - LocalDate signUpDate
     }
 
     class Loan {
@@ -36,43 +45,94 @@ namespace Model {
         - LocalDate dueDate
         - LocalDate returnDate
     }
-    class BookStatus {
+
+    class Category {
+        <<Entity>>
+        - Long id
+        - String name
+        - String description
+    }
+
+    class Admin {
+        <<Entity>>
+        - Long id
+        - String name
+        - AdminLevel adminLevel
+    }
+
+    class AdminLevel {
+        <<enumeration>>
+        SUPER
+        MANAGER
+    }
+
+    class MemberStatus {
         <<enumeration>>
         AVAILABLE
-        LOANED
+        RESTRICTED
+        BANNED
+    }
+
+    class LoanStatus {
+        <<enumeration>>
+        AVAILABLE
         RESERVED
+        LOANED
+    }
+
+    class BookStatus {
+        <<enumeration>>
+        GOOD
         LOST
         DAMAGED
     }
 }
 
-Book --> BookStatus : has
-Loan --> Book : uses
-Loan --> Member : uses
+%% Relationships
+Book --> BookDetail : has
+Book --> "0..*" Loan : loans
+BookDetail --> Category : belongs to
+Member --> "0..*" Loan : loans
+Loan --> Book : for
+Loan --> Member : by
+Admin --> AdminLevel : has
+Member --> MemberStatus : has
+BookDetail --> BookStatus : has
+BookDetail --> LoanStatus : has
 
 namespace DTO {
     class BookDTO {
         <<DTO>>
-        - Long id
-        - String title
-        - String author
-        - String isbn
-        - BookStatus status
-        - Integer publicationYear
     }
-        class BookDTO.CreateBookRequest {
+        class BookDTO.BookRequest {
             - String title
             - String author
-            - String isbn
-            - Integer publicationYear
+            - String publisher
+            - String imgUrl
+            - BookDetailDTO bookDetailDTO
         }
-        class BookDTO.UpdateBookRequest {
+
+        class BookDetailDTO {
+            <<DTO>>
+            - String isbn
+            - Category category
+            - LocalDate String publishedDate
+            - Integer stock
+            - BookStatus bookStatus
+            - LoanStatus loanStatus
+        }
+
+        class BookDTO.BookResponse {
+            - Long id
             - String title
             - String author
-            - String isbn
-            - BookStatus status
-            - Integer publicationYear
+            - String publisher
+            - String imgUrl
+            - BookDetail bookDetail
+            + BookResponse fromEntity(Book book)
         }
+
+
     class MemberDTO {
         <<DTO>>
         - Long id
